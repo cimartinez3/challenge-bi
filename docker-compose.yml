@@ -1,0 +1,34 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      ENV: "local"
+      DATABASE_URL: "postgres://novobanco:novobanco@db:5432/novobanco?sslmode=disable"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: novobanco
+      POSTGRES_PASSWORD: novobanco
+      POSTGRES_DB: novobanco
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations/001_create_customers.sql:/docker-entrypoint-initdb.d/001_create_customers.sql
+      - ./migrations/002_create_accounts.sql:/docker-entrypoint-initdb.d/002_create_accounts.sql
+      - ./migrations/003_create_transactions.sql:/docker-entrypoint-initdb.d/003_create_transactions.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U novobanco -d novobanco"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
