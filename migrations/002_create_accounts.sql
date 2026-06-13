@@ -4,7 +4,7 @@ CREATE TYPE account_status AS ENUM ('active', 'blocked', 'closed');
 CREATE TABLE accounts (
     id             UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id    UUID           NOT NULL REFERENCES customers(id),
-    account_number VARCHAR(20)    NOT NULL UNIQUE,
+    account_number VARCHAR(50)    NOT NULL UNIQUE,
     type           account_type   NOT NULL,
     currency       CHAR(3)        NOT NULL DEFAULT 'USD',
     balance        NUMERIC(18,2)  NOT NULL DEFAULT 0,

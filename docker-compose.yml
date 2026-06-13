@@ -1,6 +1,7 @@
 services:
   api:
     build: .
+    container_name: novobanco-api
     ports:
       - "8080:8080"
     environment:
@@ -13,6 +14,7 @@ services:
 
   db:
     image: postgres:15-alpine
+    container_name: novobanco-db
     environment:
       POSTGRES_USER: novobanco
       POSTGRES_PASSWORD: novobanco

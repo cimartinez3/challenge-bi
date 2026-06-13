@@ -18,17 +18,18 @@ func NewAccountHandler(svc *service.AccountService) *AccountHandler {
 }
 
 func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
-	customerID, err := uuid.Parse(chi.URLParam(r, "id"))
-	if err != nil {
-		writeError(w, errBadRequest("invalid customer id"))
-		return
-	}
-
 	var req struct {
-		Type string `json:"type"`
+		CustomerID string `json:"customer_id"`
+		Type       string `json:"type"`
 	}
 	if err := parseJSON(r, &req); err != nil {
 		writeError(w, errBadRequest("invalid request body"))
+		return
+	}
+
+	customerID, err := uuid.Parse(req.CustomerID)
+	if err != nil {
+		writeError(w, errBadRequest("invalid customer_id"))
 		return
 	}
 

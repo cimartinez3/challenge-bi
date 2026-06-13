@@ -46,12 +46,16 @@ func (h *TransactionHandler) Deposit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tx, err := h.txSvc.Deposit(r.Context(), accountID, amount, req.Reference)
+	result, err := h.txSvc.Deposit(r.Context(), accountID, amount, req.Reference)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, tx)
+	status := http.StatusCreated
+	if result.Duplicate {
+		status = http.StatusOK
+	}
+	writeJSON(w, status, result.Transaction)
 }
 
 func (h *TransactionHandler) Withdrawal(w http.ResponseWriter, r *http.Request) {
@@ -80,12 +84,16 @@ func (h *TransactionHandler) Withdrawal(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	tx, err := h.txSvc.Withdraw(r.Context(), accountID, amount, req.Reference)
+	result, err := h.txSvc.Withdraw(r.Context(), accountID, amount, req.Reference)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, tx)
+	status := http.StatusCreated
+	if result.Duplicate {
+		status = http.StatusOK
+	}
+	writeJSON(w, status, result.Transaction)
 }
 
 func (h *TransactionHandler) Transfer(w http.ResponseWriter, r *http.Request) {
@@ -126,7 +134,11 @@ func (h *TransactionHandler) Transfer(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, result)
+	status := http.StatusCreated
+	if result.Duplicate {
+		status = http.StatusOK
+	}
+	writeJSON(w, status, result)
 }
 
 func (h *TransactionHandler) ListByAccount(w http.ResponseWriter, r *http.Request) {

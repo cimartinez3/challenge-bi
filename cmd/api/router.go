@@ -3,12 +3,13 @@ package main
 import (
 	"net/http"
 
-	"github.com/carlosmartinez/challenge-bi/internal/handler"
-	"github.com/carlosmartinez/challenge-bi/internal/repository"
-	"github.com/carlosmartinez/challenge-bi/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/carlosmartinez/challenge-bi/internal/handler"
+	"github.com/carlosmartinez/challenge-bi/internal/repository"
+	"github.com/carlosmartinez/challenge-bi/internal/service"
 )
 
 func newRouter(pool *pgxpool.Pool) http.Handler {
@@ -30,18 +31,27 @@ func newRouter(pool *pgxpool.Pool) http.Handler {
 	r.Use(handler.LoggerMiddleware)
 	r.Use(handler.APIKeyMiddleware)
 
-	r.Post("/customers", customerHandler.Create)
-	r.Get("/customers/{id}", customerHandler.Get)
+	// Health endpoint is exempt from auth — required by Kubernetes liveness/readiness probes
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`))
+	})
 
-	r.Post("/customers/{id}/accounts", accountHandler.Create)
-	r.Get("/accounts/{id}", accountHandler.Get)
-	r.Patch("/accounts/{id}/status", accountHandler.UpdateStatus)
-	r.Get("/accounts/{id}/transactions", txHandler.ListByAccount)
+	r.Group(func(r chi.Router) {
+		r.Post("/customers", customerHandler.Create)
+		r.Get("/customers/{id}", customerHandler.Get)
 
-	r.Post("/accounts/{id}/deposit", txHandler.Deposit)
-	r.Post("/accounts/{id}/withdrawal", txHandler.Withdrawal)
-	r.Post("/transfers", txHandler.Transfer)
-	r.Get("/transactions/{reference}", txHandler.GetByReference)
+		r.Post("/accounts", accountHandler.Create)
+		r.Get("/accounts/{id}", accountHandler.Get)
+		r.Patch("/accounts/{id}/status", accountHandler.UpdateStatus)
+		r.Get("/accounts/{id}/transactions", txHandler.ListByAccount)
+
+		r.Post("/accounts/{id}/deposit", txHandler.Deposit)
+		r.Post("/accounts/{id}/withdrawal", txHandler.Withdrawal)
+		r.Post("/transfers", txHandler.Transfer)
+		r.Get("/transactions/{reference}", txHandler.GetByReference)
+	})
 
 	return r
 }
