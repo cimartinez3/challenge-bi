@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/shopspring/decimal"
 )
 
 const pgErrUniqueViolation = "23505"
@@ -104,16 +105,51 @@ func (r *transactionRepo) ListByAccount(ctx context.Context, accountID uuid.UUID
 	return txs, rows.Err()
 }
 
-// CreateTransferPair inserts both transaction legs atomically (ADR-005 + ADR-006).
-// Order: INSERT out (related_tx_id=NULL) → INSERT in → UPDATE out.related_tx_id.
-func (r *transactionRepo) CreateTransferPair(ctx context.Context, out, in *domain.Transaction) error {
+func (r *transactionRepo) ExecuteTransfer(ctx context.Context, fromID, toID uuid.UUID, amount decimal.Decimal, out, in *domain.Transaction) (*domain.Account, *domain.Account, error) {
 	dbTx, err := r.db.Begin(ctx)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	defer dbTx.Rollback(ctx)
 
-	// Step 1 — insert transfer_out without related_tx_id
+	fromAcc := &domain.Account{}
+	err = dbTx.QueryRow(ctx,
+		`UPDATE accounts
+		 SET balance = balance - $1, updated_at = now()
+		 WHERE id = $2 AND balance >= $1 AND status = 'active'
+		 RETURNING id, customer_id, account_number, type, currency,
+		           balance, status, created_at, updated_at`,
+		amount, fromID,
+	).Scan(
+		&fromAcc.ID, &fromAcc.CustomerID, &fromAcc.AccountNumber, &fromAcc.Type, &fromAcc.Currency,
+		&fromAcc.Balance, &fromAcc.Status, &fromAcc.CreatedAt, &fromAcc.UpdatedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil, apperror.ErrInsufficientFunds
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+
+	toAcc := &domain.Account{}
+	err = dbTx.QueryRow(ctx,
+		`UPDATE accounts
+		 SET balance = balance + $1, updated_at = now()
+		 WHERE id = $2 AND status = 'active'
+		 RETURNING id, customer_id, account_number, type, currency,
+		           balance, status, created_at, updated_at`,
+		amount, toID,
+	).Scan(
+		&toAcc.ID, &toAcc.CustomerID, &toAcc.AccountNumber, &toAcc.Type, &toAcc.Currency,
+		&toAcc.Balance, &toAcc.Status, &toAcc.CreatedAt, &toAcc.UpdatedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil, apperror.ErrAccountNotFound
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+
 	_, err = dbTx.Exec(ctx,
 		`INSERT INTO transactions
 		 (id, account_id, type, amount, balance_after, reference, related_tx_id, status, created_at)
@@ -122,10 +158,9 @@ func (r *transactionRepo) CreateTransferPair(ctx context.Context, out, in *domai
 		out.Reference, out.Status, out.CreatedAt,
 	)
 	if err != nil {
-		return mapTxError(err)
+		return nil, nil, mapTxError(err)
 	}
 
-	// Step 2 — insert transfer_in referencing out
 	_, err = dbTx.Exec(ctx,
 		`INSERT INTO transactions
 		 (id, account_id, type, amount, balance_after, reference, related_tx_id, status, created_at)
@@ -134,26 +169,30 @@ func (r *transactionRepo) CreateTransferPair(ctx context.Context, out, in *domai
 		in.Reference, out.ID, in.Status, in.CreatedAt,
 	)
 	if err != nil {
-		return mapTxError(err)
+		return nil, nil, mapTxError(err)
 	}
 
-	// Step 3 — link transfer_out back to transfer_in
 	_, err = dbTx.Exec(ctx,
 		`UPDATE transactions SET related_tx_id = $1 WHERE id = $2`,
 		in.ID, out.ID,
 	)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	return dbTx.Commit(ctx)
+	if err := dbTx.Commit(ctx); err != nil {
+		return nil, nil, err
+	}
+	return fromAcc, toAcc, nil
 }
 
 func mapTxError(err error) error {
 	if err == nil {
 		return nil
 	}
+
 	var pgErr *pgconn.PgError
+
 	if errors.As(err, &pgErr) && pgErr.Code == pgErrUniqueViolation {
 		return apperror.ErrDuplicateRef
 	}
