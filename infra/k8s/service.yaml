@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: novobanco
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: novobanco
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080

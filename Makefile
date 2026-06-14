@@ -25,43 +25,7 @@ fmt:
 imports:
 	goimports -w ./..
 
-## vet: run go vet
-vet:
-	$(GO) vet ./...
-
-## lint: vet + imports check
-lint: vet imports
-
-## tidy: tidy and verify go.mod
-tidy:
-	$(GO) mod tidy
-	$(GO) mod verify
-
 ## cover: run tests and open html coverage report
 cover:
 	$(GO) test ./... -race -count=1 -coverprofile=coverage.out
 	$(GO) tool cover -html=coverage.out
-
-## clean: remove binary and coverage artifacts
-clean:
-	rm -f $(BINARY) coverage.out
-
-## docker-up: start all services via docker compose
-docker-up:
-	docker compose up -d
-
-## docker-db: start only postgres (for local go run)
-docker-db:
-	docker compose up -d db
-
-## docker-down: stop and remove containers
-docker-down:
-	docker compose down
-
-## docker-build: build the Docker image
-docker-build:
-	docker build -t $(BINARY):local .
-
-## help: list available targets
-help:
-	@grep -E '^## ' Makefile | sed 's/## //'
