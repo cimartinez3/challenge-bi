@@ -1,0 +1,84 @@
+name: CI/CD
+
+#on:
+#  push:
+#    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: novobanco
+  EKS_CLUSTER: novobanco
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: .tool-versions
+
+      - name: Run tests
+        run: go test -coverprofile=coverage.out ./internal/service/...
+
+      - name: Coverage report
+        run: go tool cover -func=coverage.out
+
+      - name: Build
+        run: CGO_ENABLED=0 go build -o /dev/null ./cmd/api
+
+  docker-push:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push'
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push
+        id: build
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: docker-push
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure kubectl
+        run: aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER
+
+      - name: Deploy to EKS
+        env:
+          IMAGE: ${{ needs.docker-push.outputs.image }}
+        run: |
+          sed -i "s|\${ECR_REPOSITORY_URL}:latest|$IMAGE|g" infra/k8s/deployment.yaml
+          kubectl apply -f infra/k8s/
+          kubectl rollout status deployment/novobanco --timeout=120s

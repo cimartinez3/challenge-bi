@@ -7,7 +7,7 @@ import (
 // These are hardoceded keys for test.
 // In production, use AWS service like Systems Manager Parameter Store or Secrets Manager.
 var validAPIKeys = map[string]bool{
-	"novobanco-dev-key-123": true,
+	"fake-key-123": true,
 }
 
 func APIKeyMiddleware(next http.Handler) http.Handler {

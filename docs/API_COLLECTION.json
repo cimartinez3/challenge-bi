@@ -1,0 +1,371 @@
+{
+  "info": {
+    "_postman_id": "9498cf36-6c65-4be7-8a2e-d62bcff47c3c",
+    "name": "BI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "49529519",
+    "_collection_link": "https://go.postman.co/collection/49529519-9498cf36-6c65-4be7-8a2e-d62bcff47c3c?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "CREATE CUSTOMER",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "fake-key-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"full_name\": \"Carlos Martinez\",\n  \"email\": \"carlos@novobanco.com\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:8080/customers",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "customers"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GET CUSTOMER",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "fake-key-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:8080/customers/b5ea7557-cc88-49f6-899b-a88303f4fafc",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "customers",
+            "b5ea7557-cc88-49f6-899b-a88303f4fafc"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CREATE ACCOUNT",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "fake-key-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"customer_id\": \"b5ea7557-cc88-49f6-899b-a88303f4fafc\",\n    \"type\": \"savings\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:8080/accounts",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "accounts"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GET ACCOUNT",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "fake-key-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:8080/accounts/3a878514-d581-4718-85fe-0cefb84b8853",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "accounts",
+            "3a878514-d581-4718-85fe-0cefb84b8853"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "ACCOUNT HISTORIC",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "fake-key-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:8080/accounts/a4383c92-9706-467c-8f7a-408c33e97339/transactions?limit=5",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "accounts",
+            "a4383c92-9706-467c-8f7a-408c33e97339",
+            "transactions"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "5"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "BLOCK ACCOUNT",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "fake-key-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "\n{\n  \"status\": \"blocked\"\n}\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:8080//accounts/3a878514-d581-4718-85fe-0cefb84b8853/status",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "",
+            "accounts",
+            "3a878514-d581-4718-85fe-0cefb84b8853",
+            "status"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "DEPOSIT",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "fake-key-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": \"1000.05\",\n  \"reference\": \"{{$randomUUID}}\"\n}\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:8080/accounts/3a878514-d581-4718-85fe-0cefb84b8853/deposit",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "accounts",
+            "3a878514-d581-4718-85fe-0cefb84b8853",
+            "deposit"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "WITHDRAWAL",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "fake-key-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": \"20.00\",\n  \"reference\": \"{{$randomUUID}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:8080/accounts/a4383c92-9706-467c-8f7a-408c33e97339/withdrawal",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "accounts",
+            "a4383c92-9706-467c-8f7a-408c33e97339",
+            "withdrawal"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GET TRX",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "fake-key-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:8080/transactions/DEP-001",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "transactions",
+            "DEP-001"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "TRANSFER",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "fake-key-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"from_account_id\": \"3a878514-d581-4718-85fe-0cefb84b8853\",\n  \"to_account_id\": \"a4383c92-9706-467c-8f7a-408c33e97339\",\n  \"amount\": \"300.00\",\n  \"reference\": \"{{$randomUUID}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:8080/transfers",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "transfers"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
